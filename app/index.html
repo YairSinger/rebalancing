@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Portfolio Rebalancing Monitor</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <h1>Portfolio Rebalancing Monitor</h1>
+          <p id="asOfLabel">No snapshot loaded</p>
+        </div>
+        <div class="importBox">
+          <label for="snapshotFile">Upload bank Excel snapshot</label>
+          <input id="snapshotFile" type="file" accept=".xlsx,.xlsm">
+          <button id="storeState" type="button">Store state</button>
+          <small id="storeStateStatus">State saves automatically on the server URL.</small>
+        </div>
+      </header>
+
+      <nav class="tabs" aria-label="App pages">
+        <button class="active" id="currentTab" type="button">Current</button>
+        <button id="historyTab" type="button">History</button>
+      </nav>
+
+      <div id="currentPage">
+      <section class="summaryGrid">
+        <div class="instructionCard">
+          <span>Purchases needed to hit targets</span>
+          <div id="buyList" class="buyList"></div>
+        </div>
+        <div class="metric">
+          <span>Total portfolio</span>
+          <strong id="totalValue">-</strong>
+        </div>
+        <div class="metric">
+          <span>Target check</span>
+          <strong id="targetCheck">-</strong>
+        </div>
+        <div class="metric">
+          <span>Largest overweight</span>
+          <strong id="largestOver">-</strong>
+        </div>
+        <div class="metric">
+          <span>Foreign currency</span>
+          <strong id="foreignCurrencyMetric">-</strong>
+        </div>
+      </section>
+
+      <section class="workspace">
+        <aside class="panel definitions">
+          <div class="sectionTitle">
+            <h2>Definitions</h2>
+            <div class="buttonRow">
+              <button id="editTargets" type="button">Edit targets</button>
+              <button id="resetTargets" type="button">Reset</button>
+            </div>
+          </div>
+          <label>
+            New contribution
+            <input id="contributionInput" type="number" min="0" step="100" value="0">
+          </label>
+          <label>
+            Default threshold
+            <input id="defaultThresholdInput" type="number" min="0" max="100" step="0.5" value="5">
+          </label>
+          <div class="definitionTableWrap">
+            <table id="definitionsTable">
+              <thead>
+                <tr>
+                  <th>Asset class</th>
+                  <th>Target %</th>
+                  <th>Band pp</th>
+                  <th>Currency policy</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="addAssetClass" id="addAssetClassPanel">
+            <input id="newAssetClassInput" type="text" placeholder="New asset class">
+            <button id="addAssetClass" type="button">Add</button>
+          </div>
+          <div class="currencyTargets">
+            <h3>Currency exposure targets</h3>
+            <label>
+              ILS target
+              <input id="ilsTargetInput" type="number" min="0" max="100" step="0.5" value="70">
+            </label>
+            <label>
+              Foreign target
+              <input id="foreignTargetInput" type="number" min="0" max="100" step="0.5" value="30">
+            </label>
+          </div>
+        </aside>
+
+        <section class="panel dashboard">
+          <div class="sectionTitle">
+            <h2>Dashboard</h2>
+            <span id="importStatus">Initial example loaded</span>
+          </div>
+          <div class="charts">
+            <div>
+              <h3>Current vs Target</h3>
+              <div id="allocationChart" class="barChart"></div>
+            </div>
+            <div>
+              <h3>Drift From Target</h3>
+              <div id="driftChart" class="driftChart"></div>
+            </div>
+            <div>
+              <h3>Currency Exposure</h3>
+              <div id="currencyChart" class="barChart"></div>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section class="panel tablePanel">
+        <div class="sectionTitle">
+          <h2>Holdings</h2>
+          <span>Currency is tracked per holding and converted to ILS using the bank export FX rate when available.</span>
+        </div>
+        <div class="tableWrap">
+          <table id="holdingsTable">
+            <thead>
+              <tr>
+                <th>Asset class</th>
+                <th>Holding</th>
+                <th>Currency</th>
+                <th>Currency group</th>
+                <th>Units</th>
+                <th>Market value</th>
+                <th>Current %</th>
+                <th>Target %</th>
+                <th>Drift</th>
+                <th>Band</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+      </div>
+
+      <section id="historyPage" class="panel historyPage" hidden>
+        <div class="sectionTitle">
+          <h2>Assets Over Time</h2>
+          <span id="snapshotCount">No saved snapshots</span>
+        </div>
+        <div id="historyChart" class="historyChart"></div>
+        <div class="tableWrap">
+          <table id="historyTable">
+            <thead></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+    <script src="./app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,10 @@
+.DS_Store
+.playwright-mcp/
+node_modules/
+
+# Local personal portfolio data. Created from data/state.example.json by install-app.command.
+data/state.json
+
+# Bank exports and generated workbook/render outputs.
+inputs/
+outputs/

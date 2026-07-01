@@ -1,0 +1,550 @@
+:root {
+  color-scheme: light;
+  --bg: #f4f7fa;
+  --panel: #ffffff;
+  --text: #182230;
+  --muted: #637083;
+  --line: #d8e0ea;
+  --blue: #2463a6;
+  --orange: #c46f2e;
+  --green: #147a48;
+  --red: #b42318;
+  --soft-blue: #eaf2f8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 14px;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.shell {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: end;
+  margin-bottom: 18px;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 16px;
+}
+
+h3 {
+  font-size: 13px;
+  margin-bottom: 10px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.topbar p,
+.sectionTitle span,
+small {
+  color: var(--muted);
+}
+
+.importBox {
+  display: grid;
+  gap: 6px;
+  justify-items: end;
+}
+
+.importBox label {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.tabs button {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 6px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.tabs button.active {
+  color: #fff;
+  background: var(--blue);
+  border-color: var(--blue);
+}
+
+input[type="file"],
+input[type="number"] {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: var(--text);
+}
+
+#storeState {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 6px;
+  padding: 8px 10px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+#storeStateStatus {
+  max-width: 280px;
+  text-align: right;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: minmax(320px, 1.6fr) repeat(4, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.panel,
+.metric,
+.instructionCard {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgb(16 24 40 / 5%);
+  min-width: 0;
+}
+
+.metric,
+.instructionCard {
+  padding: 16px;
+}
+
+.metric span,
+.instructionCard span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.metric strong {
+  font-size: 21px;
+}
+
+.instructionCard {
+  background: var(--soft-blue);
+  border-color: #a9bfd5;
+}
+
+.buyList {
+  display: grid;
+  gap: 8px;
+  max-height: 190px;
+  overflow: auto;
+}
+
+.buyRow {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: center;
+  padding: 7px 0;
+  border-bottom: 1px solid #c9d8e8;
+}
+
+.buyRow:last-child {
+  border-bottom: 0;
+}
+
+.buyRank {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  color: #fff;
+  background: var(--blue);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.buyAsset {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--blue);
+  font-weight: 800;
+}
+
+.buyAmount {
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.buyDrift {
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.buyEmpty {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: 420px minmax(0, 1fr);
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.panel {
+  padding: 16px;
+}
+
+.sectionTitle {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.sectionTitle button {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.buttonRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.definitions {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+
+.definitions label {
+  display: grid;
+  grid-template-columns: 1fr 120px;
+  gap: 10px;
+  align-items: center;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.currencyTargets {
+  display: grid;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.addAssetClass {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.addAssetClass input {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+.addAssetClass button,
+.removeAssetClass {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.removeAssetClass {
+  font-size: 12px;
+}
+
+.definitionTableWrap,
+.tableWrap {
+  overflow: auto;
+  max-width: 100%;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  background: #eef3f8;
+  color: #28394f;
+  font-size: 12px;
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--line);
+  padding: 9px 8px;
+}
+
+td {
+  border-bottom: 1px solid #edf1f5;
+  padding: 8px;
+  vertical-align: middle;
+}
+
+td.num,
+th.num {
+  text-align: right;
+}
+
+td input,
+td select {
+  width: 100%;
+  min-width: 74px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 5px 6px;
+  background: #fff;
+}
+
+input:disabled,
+select:disabled {
+  color: #596779;
+  background: #f4f6f8;
+  cursor: not-allowed;
+}
+
+.charts {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.charts > div:last-child {
+  grid-column: 1 / -1;
+}
+
+.barChart,
+.driftChart {
+  display: grid;
+  gap: 8px;
+}
+
+.barRow,
+.driftRow {
+  display: grid;
+  grid-template-columns: 156px minmax(160px, 1fr) 58px;
+  gap: 10px;
+  align-items: center;
+}
+
+.label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #334155;
+}
+
+.track {
+  height: 28px;
+  display: grid;
+  gap: 3px;
+}
+
+.bar,
+.targetBar,
+.driftBar {
+  height: 11px;
+  border-radius: 2px;
+}
+
+.bar {
+  background: var(--blue);
+}
+
+.targetBar {
+  background: var(--orange);
+}
+
+.driftTrack {
+  height: 18px;
+  position: relative;
+  background: #eef2f6;
+  border-radius: 2px;
+}
+
+.driftTrack::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: #8b98a8;
+}
+
+.driftBar {
+  position: absolute;
+  top: 3px;
+  height: 12px;
+}
+
+.positive {
+  background: var(--green);
+}
+
+.negative {
+  background: var(--red);
+}
+
+.status {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.inside {
+  color: #175c3a;
+  background: #dff3e8;
+}
+
+.above,
+.below {
+  color: #8a2c0d;
+  background: #fff0df;
+}
+
+.tablePanel {
+  padding-bottom: 10px;
+}
+
+.historyPage {
+  display: grid;
+  gap: 16px;
+}
+
+.historyChart {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.historySeries {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 12px;
+  background: #fbfcfe;
+}
+
+.historySeriesHead {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.historySeriesHead span {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.historyBars {
+  display: flex;
+  align-items: end;
+  gap: 8px;
+  min-height: 124px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.historyPoint {
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  min-width: 38px;
+}
+
+.historyBar {
+  width: 18px;
+  background: var(--blue);
+  border-radius: 3px 3px 0 0;
+}
+
+.emptyState {
+  color: var(--muted);
+  border: 1px dashed var(--line);
+  border-radius: 6px;
+  padding: 20px;
+  text-align: center;
+}
+
+@media (max-width: 980px) {
+  .topbar,
+  .summaryGrid,
+  .workspace,
+  .charts {
+    grid-template-columns: 1fr;
+  }
+
+  .topbar {
+    display: grid;
+    align-items: stretch;
+  }
+
+  .importBox {
+    justify-items: stretch;
+  }
+
+  .definitions label {
+    grid-template-columns: 1fr;
+  }
+
+  .barRow,
+  .driftRow {
+    grid-template-columns: 112px minmax(100px, 1fr) 52px;
+  }
+}
