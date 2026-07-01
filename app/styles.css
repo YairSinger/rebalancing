@@ -130,7 +130,7 @@ input[type="number"] {
 
 .summaryGrid {
   display: grid;
-  grid-template-columns: minmax(320px, 1.6fr) repeat(4, minmax(160px, 1fr));
+  grid-template-columns: minmax(360px, 1.6fr) repeat(4, minmax(160px, 1fr));
   gap: 12px;
   margin-bottom: 12px;
 }
@@ -163,19 +163,30 @@ input[type="number"] {
   font-size: 21px;
 }
 
-.instructionCard {
+.instructionStack {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.sellCard {
+  background: #fff6ed;
+  border-color: #e3b083;
+}
+
+.buyCard {
   background: var(--soft-blue);
   border-color: #a9bfd5;
 }
 
-.buyList {
+.tradeList {
   display: grid;
   gap: 8px;
-  max-height: 190px;
+  max-height: 136px;
   overflow: auto;
 }
 
-.buyRow {
+.tradeRow {
   display: grid;
   grid-template-columns: 24px minmax(0, 1fr) auto auto;
   gap: 8px;
@@ -184,11 +195,15 @@ input[type="number"] {
   border-bottom: 1px solid #c9d8e8;
 }
 
-.buyRow:last-child {
+.sellCard .tradeRow {
+  border-bottom-color: #e7c5a8;
+}
+
+.tradeRow:last-child {
   border-bottom: 0;
 }
 
-.buyRank {
+.tradeRank {
   display: grid;
   place-items: center;
   width: 22px;
@@ -200,7 +215,11 @@ input[type="number"] {
   font-weight: 700;
 }
 
-.buyAsset {
+.sellCard .tradeRank {
+  background: var(--orange);
+}
+
+.tradeAsset {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -209,18 +228,22 @@ input[type="number"] {
   font-weight: 800;
 }
 
-.buyAmount {
+.sellCard .tradeAsset {
+  color: #8a4a17;
+}
+
+.tradeAmount {
   font-weight: 800;
   white-space: nowrap;
 }
 
-.buyDrift {
+.tradeDrift {
   color: var(--muted);
   font-size: 12px;
   white-space: nowrap;
 }
 
-.buyEmpty {
+.tradeEmpty {
   color: var(--muted);
   font-weight: 700;
 }
@@ -424,10 +447,23 @@ select:disabled {
   background: #8b98a8;
 }
 
+.driftBand {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  border: 1px solid #9fb0c3;
+  background: rgb(255 255 255 / 65%);
+  border-radius: 2px;
+}
+
 .driftBar {
   position: absolute;
   top: 3px;
   height: 12px;
+}
+
+.insideBand {
+  background: #75859a;
 }
 
 .positive {

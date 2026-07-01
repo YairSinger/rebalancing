@@ -28,9 +28,15 @@
 
       <div id="currentPage">
       <section class="summaryGrid">
-        <div class="instructionCard">
-          <span>Purchases needed to hit targets</span>
-          <div id="buyList" class="buyList"></div>
+        <div class="instructionStack">
+          <div class="instructionCard sellCard">
+            <span>Sales needed above bands</span>
+            <div id="sellList" class="tradeList"></div>
+          </div>
+          <div class="instructionCard buyCard">
+            <span>Purchases from excess cash</span>
+            <div id="buyList" class="tradeList"></div>
+          </div>
         </div>
         <div class="metric">
           <span>Total portfolio</span>

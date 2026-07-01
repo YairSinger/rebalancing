@@ -3,6 +3,7 @@ const PCT = new Intl.NumberFormat("en-US", { style: "percent", minimumFractionDi
 const STORAGE_KEY = "portfolio-rebalancing-settings-v2";
 const DB_NAME = "portfolio-rebalancing-monitor";
 const DB_VERSION = 1;
+const CASH_ASSET_CLASS = "Cash / Money Market";
 
 const DEFAULT_ASSET_CLASSES = [
   "US Large Cap Equity",
@@ -77,6 +78,7 @@ const els = {
   allocationChart: document.getElementById("allocationChart"),
   driftChart: document.getElementById("driftChart"),
   currencyChart: document.getElementById("currencyChart"),
+  sellList: document.getElementById("sellList"),
   buyList: document.getElementById("buyList"),
   totalValue: document.getElementById("totalValue"),
   targetCheck: document.getElementById("targetCheck"),
@@ -217,8 +219,141 @@ function byClass() {
   });
 }
 
+function isCashClass(row) {
+  return row.assetClass === CASH_ASSET_CLASS;
+}
+
+function upperBandValue(row, planningTotal) {
+  return Math.max(0, (row.target + row.threshold) * planningTotal);
+}
+
+function lowerBandValue(row, planningTotal) {
+  return Math.max(0, (row.target - row.threshold) * planningTotal);
+}
+
+function createTradePlan(rows, total, addedCash) {
+  const planningTotal = total + addedCash;
+  if (planningTotal <= 0) return { sells: [], buys: [] };
+
+  const workingRows = rows.map((row) => ({
+    ...row,
+    planningValue: row.marketValue + (isCashClass(row) ? addedCash : 0),
+  }));
+  const cashRow = workingRows.find(isCashClass);
+  const sells = workingRows
+    .filter((row) => !isCashClass(row))
+    .map((row) => {
+      const amount = Math.max(0, row.planningValue - upperBandValue(row, planningTotal));
+      return { ...row, amount, driftBeyondBand: row.planningValue / planningTotal - row.target - row.threshold };
+    })
+    .filter((row) => row.amount >= 1)
+    .sort((a, b) => b.driftBeyondBand - a.driftBeyondBand);
+
+  const sellTotal = sells.reduce((sum, row) => sum + row.amount, 0);
+  const values = new Map(workingRows.map((row) => [row.assetClass, row.planningValue]));
+  for (const sell of sells) values.set(sell.assetClass, values.get(sell.assetClass) - sell.amount);
+
+  if (!cashRow) return { sells, buys: [] };
+  const cashOriginal = cashRow.marketValue;
+  const cashBeforeSells = values.get(cashRow.assetClass);
+  values.set(cashRow.assetClass, cashBeforeSells + sellTotal);
+
+  const buysByClass = new Map();
+  const addInstruction = (row, amount, actionLabel) => {
+    if (amount < 1) return;
+    buysByClass.set(row.assetClass, {
+      ...row,
+      amount: (buysByClass.get(row.assetClass)?.amount || 0) + amount,
+      actionLabel,
+    });
+  };
+  const reserveCash = Math.max(0, Math.min(
+    values.get(cashRow.assetClass) - cashOriginal,
+    lowerBandValue(cashRow, planningTotal) - cashOriginal,
+  ));
+  addInstruction({
+    ...cashRow,
+    drift: cashOriginal / planningTotal - cashRow.target,
+  }, reserveCash, "Keep as cash");
+
+  let purchaseBudget = Math.max(0, values.get(cashRow.assetClass) - Math.max(
+    upperBandValue(cashRow, planningTotal),
+    lowerBandValue(cashRow, planningTotal),
+  ));
+
+  const addBuy = (row, amount) => {
+    if (amount < 1) return;
+    addInstruction(row, amount, "Buy");
+    values.set(row.assetClass, values.get(row.assetClass) + amount);
+    values.set(cashRow.assetClass, values.get(cashRow.assetClass) - amount);
+    purchaseBudget -= amount;
+  };
+
+  const underLowerBand = () => workingRows
+    .filter((row) => !isCashClass(row))
+    .map((row) => ({
+      ...row,
+      needed: Math.max(0, lowerBandValue(row, planningTotal) - values.get(row.assetClass)),
+      drift: values.get(row.assetClass) / planningTotal - row.target,
+    }))
+    .filter((row) => row.needed >= 1)
+    .sort((a, b) => a.drift - b.drift);
+
+  for (const row of underLowerBand()) {
+    if (purchaseBudget < 1) break;
+    addBuy(row, Math.min(row.needed, purchaseBudget));
+  }
+
+  const towardTarget = () => workingRows
+    .filter((row) => !isCashClass(row))
+    .map((row) => ({
+      ...row,
+      needed: Math.max(0, row.target * planningTotal - values.get(row.assetClass)),
+      drift: values.get(row.assetClass) / planningTotal - row.target,
+    }))
+    .filter((row) => row.needed >= 1)
+    .sort((a, b) => a.drift - b.drift);
+
+  for (const row of towardTarget()) {
+    if (purchaseBudget < 1) break;
+    addBuy(row, Math.min(row.needed, purchaseBudget));
+  }
+
+  return {
+    sells,
+    buys: [...buysByClass.values()].sort((a, b) => b.amount - a.amount),
+  };
+}
+
 function currencyGroup(item) {
   return item.currencyGroup || (item.currency === "ILS" ? "ILS" : "Foreign");
+}
+
+function holdingAssignmentKey(item) {
+  const symbol = String(item.symbol || "").trim().toLowerCase();
+  const name = String(item.name || "").trim().toLowerCase();
+  return symbol || name ? `${symbol}|${name}` : "";
+}
+
+function preserveHoldingAssignments(rows, previousHoldings) {
+  const assignments = new Map();
+  for (const holding of previousHoldings) {
+    const key = holdingAssignmentKey(holding);
+    if (!key) continue;
+    assignments.set(key, {
+      assetClass: holding.assetClass,
+      currencyGroup: holding.currencyGroup,
+    });
+  }
+  return rows.map((row) => {
+    const assignment = assignments.get(holdingAssignmentKey(row));
+    if (!assignment) return row;
+    return {
+      ...row,
+      assetClass: assignment.assetClass || row.assetClass,
+      currencyGroup: assignment.currencyGroup || row.currencyGroup,
+    };
+  });
 }
 
 function byCurrency() {
@@ -301,9 +436,7 @@ function render() {
   const rows = byClass();
   const currencyRows = byCurrency();
   const total = totalValue();
-  const buys = rows
-    .filter((row) => row.amountToTarget >= 1)
-    .sort((a, b) => b.amountToTarget - a.amountToTarget);
+  const plan = createTradePlan(rows, total, contribution());
   const over = rows.slice().sort((a, b) => b.drift - a.drift)[0];
   const targetSum = definitions.reduce((sum, item) => sum + item.target, 0);
   const currencyTargetSum = currencyRows.reduce((sum, item) => sum + item.target, 0);
@@ -314,7 +447,8 @@ function render() {
   els.targetCheck.style.color = Math.abs(targetSum - 1) <= 0.0005 && Math.abs(currencyTargetSum - 1) <= 0.0005 ? "var(--green)" : "var(--red)";
   els.largestOver.textContent = over ? `${over.assetClass} (${formatSignedPct(over.drift)})` : "-";
   els.foreignCurrencyMetric.textContent = foreign ? `${PCT.format(foreign.current)} / ${PCT.format(foreign.target)}` : "-";
-  renderBuyList(buys);
+  renderTradeList(els.sellList, plan.sells, "No sales required outside current bands.");
+  renderTradeList(els.buyList, plan.buys, "No purchases required outside current bands.");
 
   renderCharts(rows, currencyRows);
   renderHoldings(rows, total);
@@ -322,17 +456,17 @@ function render() {
   saveSettings();
 }
 
-function renderBuyList(buys) {
-  if (buys.length === 0) {
-    els.buyList.innerHTML = `<div class="buyEmpty">No purchases required for current targets.</div>`;
+function renderTradeList(element, trades, emptyMessage) {
+  if (trades.length === 0) {
+    element.innerHTML = `<div class="tradeEmpty">${emptyMessage}</div>`;
     return;
   }
-  els.buyList.innerHTML = buys.map((row, index) => `
-    <div class="buyRow">
-      <div class="buyRank">${index + 1}</div>
-      <div class="buyAsset" title="${escapeHtml(row.assetClass)}">${escapeHtml(row.assetClass)}</div>
-      <div class="buyAmount">${ILS.format(row.amountToTarget)}</div>
-      <div class="buyDrift">${formatSignedPct(row.drift)}</div>
+  element.innerHTML = trades.map((row, index) => `
+    <div class="tradeRow">
+      <div class="tradeRank">${index + 1}</div>
+      <div class="tradeAsset" title="${escapeHtml(row.assetClass)}">${row.actionLabel ? `${escapeHtml(row.actionLabel)} ` : ""}${escapeHtml(row.assetClass)}</div>
+      <div class="tradeAmount">${ILS.format(row.amount)}</div>
+      <div class="tradeDrift">${formatSignedPct(row.drift)}</div>
     </div>
   `).join("");
 }
@@ -350,15 +484,19 @@ function renderCharts(rows, currencyRows) {
     </div>
   `).join("");
 
-  const maxDrift = Math.max(0.01, ...rows.map((row) => Math.abs(row.drift)));
+  const maxDrift = Math.max(0.01, ...rows.flatMap((row) => [Math.abs(row.drift), row.threshold]));
   els.driftChart.innerHTML = rows.map((row) => {
     const width = Math.abs(row.drift) / maxDrift * 50;
     const left = row.drift >= 0 ? 50 : 50 - width;
+    const bandWidth = Math.min(100, row.threshold / maxDrift * 100);
+    const bandLeft = 50 - bandWidth / 2;
+    const driftClass = Math.abs(row.drift) <= row.threshold ? "insideBand" : row.drift >= 0 ? "positive" : "negative";
     return `
       <div class="driftRow">
         <div class="label" title="${escapeHtml(row.assetClass)}">${escapeHtml(row.assetClass)}</div>
-        <div class="driftTrack">
-          <div class="driftBar ${row.drift >= 0 ? "positive" : "negative"}" style="left:${left}%; width:${width}%"></div>
+        <div class="driftTrack" title="Band ${PCT.format(row.threshold)}">
+          <div class="driftBand" style="left:${bandLeft}%; width:${bandWidth}%"></div>
+          <div class="driftBar ${driftClass}" style="left:${left}%; width:${width}%"></div>
         </div>
         <div class="num">${formatSignedPct(row.drift)}</div>
       </div>
@@ -541,7 +679,7 @@ async function importSnapshot(file) {
   try {
     els.importStatus.textContent = "Reading snapshot...";
     const workbook = await readXlsx(file);
-    const rows = extractRows(workbook);
+    const rows = preserveHoldingAssignments(extractRows(workbook), holdings);
     holdings = rows;
     const snapshot = createSnapshot(file.name, rows);
     lastUploaded = {
