@@ -43,6 +43,11 @@
           <strong id="totalValue">-</strong>
         </div>
         <div class="metric">
+          <span>Unrealized profit</span>
+          <strong id="totalProfit">-</strong>
+          <small id="profitCoverage"></small>
+        </div>
+        <div class="metric">
           <span>Target check</span>
           <strong id="targetCheck">-</strong>
         </div>
@@ -141,6 +146,7 @@
                 <th>Currency group</th>
                 <th>Units</th>
                 <th>Market value</th>
+                <th>Profit (ILS)</th>
                 <th>Current %</th>
                 <th>Target %</th>
                 <th>Drift</th>
@@ -159,6 +165,9 @@
           <h2>Assets Over Time</h2>
           <span id="snapshotCount">No saved snapshots</span>
         </div>
+        <h3>Unrealized profit at each snapshot</h3>
+        <div id="profitHistoryChart"></div>
+        <h3>Assets Over Time</h3>
         <div id="historyChart" class="historyChart"></div>
         <div class="tableWrap">
           <table id="historyTable">
@@ -168,6 +177,6 @@
         </div>
       </section>
     </main>
-    <script src="./app.js"></script>
+    <script type="module" src="./app.js"></script>
   </body>
 </html>
