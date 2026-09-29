@@ -16,6 +16,10 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   background: var(--bg);
@@ -585,8 +589,14 @@ select:disabled {
   }
 }
 
-.profitBars { display: flex; align-items: end; gap: 14px; overflow-x: auto; border-bottom: 1px solid var(--line); padding: 12px; min-height: 150px; }
+.profitLegend { display: flex; gap: 18px; color: var(--muted); font-size: 12px; }
+.profitLegend span { display: inline-flex; align-items: center; gap: 6px; }
+.profitLegend i { display: inline-block; width: 12px; height: 12px; border-radius: 2px; }
+.principalKey, .principalSegment { background: var(--blue); }
+.profitKey, .profitSegment { background: var(--green); }
+.profitBars { display: flex; align-items: end; gap: 14px; overflow-x: auto; border-bottom: 1px solid var(--line); padding: 12px; min-height: 190px; }
 .profitPoint { display: grid; justify-items: center; gap: 5px; min-width: 95px; font-size: 12px; }
-.profitBarArea { display: flex; align-items: flex-end; justify-content: center; height: 70px; width: 100%; border-bottom: 1px solid var(--line); }
-.profitBar { width: 24px; background: var(--green); border-radius: 3px; }
-.profitBar.negative { background: var(--red); }
+.profitBarArea { display: flex; align-items: flex-end; justify-content: center; height: 126px; width: 100%; border-bottom: 1px solid var(--line); }
+.profitStack { display: flex; flex-direction: column; justify-content: flex-end; width: 28px; overflow: hidden; border-radius: 3px 3px 0 0; }
+.principalSegment, .profitSegment { width: 100%; flex: 0 0 auto; }
+.profitSegment.negative { background: var(--red); }
