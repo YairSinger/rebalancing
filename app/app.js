@@ -598,14 +598,23 @@ function renderHistory() {
     const summary = snapshot.profitSummary || profitSummary((snapshot.holdings || []).filter((item) => item.symbol !== "CASH"));
     return summary.known && !summary.unknown ? summary.profitIls : null;
   });
-  const limit = Math.max(1, ...knownProfits.filter((value) => value !== null).map(Math.abs));
-  els.profitHistoryChart.innerHTML = knownProfits.some((value) => value !== null)
-    ? `<div class="profitBars" role="img" aria-label="Unrealized profit by snapshot in ILS">${snapshots.map((snapshot, index) => {
-      const value = knownProfits[index];
-      const height = value === null ? 0 : Math.max(2, Math.abs(value) / limit * 68);
-      return `<div class="profitPoint" title="${escapeHtml(snapshot.snapshotDate)}: ${value === null ? "unknown" : escapeHtml(ILS.format(value))}">
-        <span>${value === null ? "-" : ILS.format(value)}</span>
-        <div class="profitBarArea"><div class="profitBar ${value < 0 ? "negative" : ""}" style="height:${height}px"></div></div>
+  const hasKnownProfit = knownProfits.some((value) => value !== null);
+  const maxTotal = Math.max(1, ...snapshots.map((snapshot) => Number(snapshot.totalValue) || 0));
+  els.profitHistoryChart.innerHTML = hasKnownProfit
+    ? `<div class="profitLegend"><span><i class="principalKey"></i> Principal</span><span><i class="profitKey"></i> Profit / loss</span></div>
+      <div class="profitBars" role="img" aria-label="Portfolio principal and unrealized profit by snapshot in ILS">${snapshots.map((snapshot, index) => {
+      const profit = knownProfits[index];
+      const total = Number(snapshot.totalValue) || 0;
+      const principal = profit === null ? null : total - profit;
+      const principalHeight = principal === null ? 0 : Math.max(0, principal / maxTotal * 112);
+      const profitHeight = profit === null ? 0 : Math.abs(profit) / maxTotal * 112;
+      const profitLabel = profit === null ? "unknown" : ILS.format(profit);
+      return `<div class="profitPoint" title="${escapeHtml(snapshot.snapshotDate)}: principal ${principal === null ? "unknown" : escapeHtml(ILS.format(principal))}; profit ${escapeHtml(profitLabel)}">
+        <span>${profitLabel}</span>
+        <div class="profitBarArea"><div class="profitStack" style="height:${principalHeight + profitHeight}px">
+          ${principalHeight > 0 ? `<div class="principalSegment" style="height:${principalHeight}px"></div>` : ""}
+          ${profitHeight > 0 ? `<div class="profitSegment ${profit < 0 ? "negative" : ""}" style="height:${profitHeight}px"></div>` : ""}
+        </div></div>
         <small>${escapeHtml(shortDate(snapshot.snapshotDate))}</small>
       </div>`;
     }).join("")}</div>`
@@ -1101,4 +1110,4 @@ async function init() {
   }
   render();
   renderHistory();
-        }
+}
