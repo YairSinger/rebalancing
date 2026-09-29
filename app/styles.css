@@ -594,6 +594,7 @@ select:disabled {
 .profitLegend i { display: inline-block; width: 12px; height: 12px; border-radius: 2px; }
 .principalKey, .principalSegment { background: var(--blue); }
 .profitKey, .profitSegment { background: var(--green); }
+[hidden] { display: none !important; }
 .profitBars { display: flex; align-items: end; gap: 14px; overflow-x: auto; border-bottom: 1px solid var(--line); padding: 12px; min-height: 190px; }
 .profitPoint { display: grid; justify-items: center; gap: 5px; min-width: 95px; font-size: 12px; }
 .profitBarArea { display: flex; align-items: flex-end; justify-content: center; height: 126px; width: 100%; border-bottom: 1px solid var(--line); }
