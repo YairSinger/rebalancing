@@ -1,3 +1,4 @@
+import { profitColumns, holdingProfit, profitSummary } from "./profit.mjs";
 const ILS = new Intl.NumberFormat("he-IL", { style: "currency", currency: "ILS", maximumFractionDigits: 0 });
 const PCT = new Intl.NumberFormat("en-US", { style: "percent", minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const STORAGE_KEY = "portfolio-rebalancing-settings-v2";
@@ -81,6 +82,9 @@ const els = {
   sellList: document.getElementById("sellList"),
   buyList: document.getElementById("buyList"),
   totalValue: document.getElementById("totalValue"),
+  totalProfit: document.getElementById("totalProfit"),
+  profitCoverage: document.getElementById("profitCoverage"),
+  profitHistoryChart: document.getElementById("profitHistoryChart"),
   targetCheck: document.getElementById("targetCheck"),
   largestOver: document.getElementById("largestOver"),
   foreignCurrencyMetric: document.getElementById("foreignCurrencyMetric"),
@@ -443,6 +447,9 @@ function render() {
   const foreign = currencyRows.find((item) => item.group === "Foreign");
 
   els.totalValue.textContent = ILS.format(total);
+  const profit = profitSummary(holdings.filter((item) => item.symbol !== "CASH"));
+  els.totalProfit.textContent = profit.known ? `${ILS.format(profit.profitIls)}${profit.unknown ? " (partial)" : ""}` : "Unknown";
+  els.profitCoverage.textContent = `${profit.known} priced / ${profit.unknown} without cost basis`;
   els.targetCheck.textContent = `${PCT.format(targetSum)} assets / ${PCT.format(currencyTargetSum)} FX`;
   els.targetCheck.style.color = Math.abs(targetSum - 1) <= 0.0005 && Math.abs(currencyTargetSum - 1) <= 0.0005 ? "var(--green)" : "var(--red)";
   els.largestOver.textContent = over ? `${over.assetClass} (${formatSignedPct(over.drift)})` : "-";
@@ -542,6 +549,7 @@ function renderHoldings(classRows, total) {
       </td>
       <td class="num">${formatNumber(item.units)}</td>
       <td class="num">${ILS.format(item.marketValueIls)}</td>
+      <td class="num">${typeof item.profitIls === "number" ? ILS.format(item.profitIls) : "-"}</td>
       <td class="num">${PCT.format(current)}</td>
       <td class="num">${definition ? PCT.format(definition.target) : "-"}</td>
       <td class="num">${formatSignedPct(drift)}</td>
@@ -556,6 +564,7 @@ function renderHistory() {
   els.snapshotCount.textContent = snapshots.length === 1 ? "1 saved snapshot" : `${snapshots.length} saved snapshots`;
   if (snapshots.length === 0) {
     els.historyChart.innerHTML = `<div class="emptyState">Upload a bank Excel snapshot to start the history.</div>`;
+    els.profitHistoryChart.innerHTML = `<div class="emptyState">Profit history needs bank snapshots with a reported ILS profit or total cost basis.</div>`;
     els.historyHead.innerHTML = "";
     els.historyBody.innerHTML = "";
     return;
@@ -585,11 +594,29 @@ function renderHistory() {
     `;
   }).join("");
 
+  const knownProfits = snapshots.map((snapshot) => {
+    const summary = snapshot.profitSummary || profitSummary((snapshot.holdings || []).filter((item) => item.symbol !== "CASH"));
+    return summary.known && !summary.unknown ? summary.profitIls : null;
+  });
+  const limit = Math.max(1, ...knownProfits.filter((value) => value !== null).map(Math.abs));
+  els.profitHistoryChart.innerHTML = knownProfits.some((value) => value !== null)
+    ? `<div class="profitBars" role="img" aria-label="Unrealized profit by snapshot in ILS">${snapshots.map((snapshot, index) => {
+      const value = knownProfits[index];
+      const height = value === null ? 0 : Math.max(2, Math.abs(value) / limit * 68);
+      return `<div class="profitPoint" title="${escapeHtml(snapshot.snapshotDate)}: ${value === null ? "unknown" : escapeHtml(ILS.format(value))}">
+        <span>${value === null ? "-" : ILS.format(value)}</span>
+        <div class="profitBarArea"><div class="profitBar ${value < 0 ? "negative" : ""}" style="height:${height}px"></div></div>
+        <small>${escapeHtml(shortDate(snapshot.snapshotDate))}</small>
+      </div>`;
+    }).join("")}</div>`
+    : `<div class="emptyState">No complete profit snapshots yet. Re-import a report with ILS profit or total cost basis.</div>`;
+
   els.historyHead.innerHTML = `
     <tr>
       <th>Date</th>
       <th>File</th>
       <th class="num">Total</th>
+      <th class="num">Unrealized profit</th>
       ${classNames.map((name) => `<th class="num">${escapeHtml(name)}</th>`).join("")}
       <th class="num">Foreign</th>
     </tr>
@@ -599,6 +626,7 @@ function renderHistory() {
       <td>${escapeHtml(snapshot.snapshotDate)}</td>
       <td>${escapeHtml(snapshot.fileName)}</td>
       <td class="num">${ILS.format(snapshot.totalValue)}</td>
+      <td class="num">${(() => { const p = snapshot.profitSummary || profitSummary((snapshot.holdings || []).filter((item) => item.symbol !== "CASH")); return p.known && !p.unknown ? ILS.format(p.profitIls) : "-"; })()}</td>
       ${classNames.map((name) => `<td class="num">${ILS.format(snapshot.byClass[name] || 0)}</td>`).join("")}
       <td class="num">${PCT.format((snapshot.byCurrency.Foreign || 0) / snapshot.totalValue)}</td>
     </tr>
@@ -736,6 +764,7 @@ function createSnapshot(fileName, rows) {
     byClass: summarizeRows(rows, (item) => item.assetClass),
     byCurrency: summarizeRows(rows, currencyGroup),
     totalValue: rows.reduce((sum, item) => sum + (Number(item.marketValueIls) || 0), 0),
+    profitSummary: profitSummary(rows.filter((item) => item.symbol !== "CASH")),
   };
 }
 
@@ -773,6 +802,7 @@ function extractRows(sheetRows) {
   const headerIndex = sheetRows.findIndex((row) => row.includes("שם נייר") && row.includes("שווי בש\"ח"));
   if (headerIndex === -1) throw new Error("Could not find bank holdings header row");
   const dataRows = [];
+  const columns = profitColumns(sheetRows[headerIndex]);
   for (const row of sheetRows.slice(headerIndex + 1)) {
     const name = row[0];
     if (!name || String(name).includes("סה\"כ")) break;
@@ -795,6 +825,7 @@ function extractRows(sheetRows) {
       units,
       price,
       marketValueIls,
+      ...holdingProfit(row, columns, marketValueIls),
       tradedValue,
       currency,
       currencyGroup: inferredCurrencyGroup,
@@ -814,6 +845,8 @@ function extractRows(sheetRows) {
         units: 1,
         price: freeCash,
         marketValueIls: freeCash,
+        costBasisIls: null,
+        profitIls: null,
         tradedValue: freeCash,
         currency: "ILS",
         currencyGroup: "ILS",
@@ -1068,4 +1101,4 @@ async function init() {
   }
   render();
   renderHistory();
-}
+        }
