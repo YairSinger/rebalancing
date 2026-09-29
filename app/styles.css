@@ -130,7 +130,7 @@ input[type="number"] {
 
 .summaryGrid {
   display: grid;
-  grid-template-columns: minmax(360px, 1.6fr) repeat(4, minmax(160px, 1fr));
+  grid-template-columns: minmax(360px, 1.6fr) repeat(5, minmax(150px, 1fr));
   gap: 12px;
   margin-bottom: 12px;
 }
@@ -584,3 +584,9 @@ select:disabled {
     grid-template-columns: 112px minmax(100px, 1fr) 52px;
   }
 }
+
+.profitBars { display: flex; align-items: end; gap: 14px; overflow-x: auto; border-bottom: 1px solid var(--line); padding: 12px; min-height: 150px; }
+.profitPoint { display: grid; justify-items: center; gap: 5px; min-width: 95px; font-size: 12px; }
+.profitBarArea { display: flex; align-items: flex-end; justify-content: center; height: 70px; width: 100%; border-bottom: 1px solid var(--line); }
+.profitBar { width: 24px; background: var(--green); border-radius: 3px; }
+.profitBar.negative { background: var(--red); }
